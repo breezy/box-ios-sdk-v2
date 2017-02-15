@@ -1,105 +1,241 @@
-# box-ios-sdk-v2
+# box-ios-sdk-v2-master
+Adapted for using with BlackBerry SDK
+Since the 3.X version BlackBerry SDK wraps NSURLSession. Thus the secured API should be used to access downloaded files. To achieve this the files accessing API should be a dependency injectable part.The implementation is a trivial protocol that repeats the default file system API. Whenever it is needed this protocol is used instead of existing calls.
 
-[![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
-[![Build Status](https://api.travis-ci.org/box/box-ios-content-sdk.svg)](https://travis-ci.org/box/box-ios-content-sdk)
+BoxSDK: Box API V2 iOS SDK
+==========================
 
-Box iOS SDK
-===================
+This SDK provides access to the [Box V2 API](https://developers.box.com/docs/).
+It currently supports file and folder operations.
 
-This SDK makes it easy to use Box's [Content API](https://developers.box.com/docs/) in your iOS projects.
+We have built [several sample applications with the V2 SDK](https://github.com/box/box-ios-sdk-sample-app).
 
-Developer Setup
----------------
-* Ensure you have the latest version of [Xcode](https://developer.apple.com/xcode/) installed.
-* We encourage you to use [Carthage] (https://github.com/Carthage/Carthage#installing-carthage) to manage dependencies. Minimal supported version for Carthage is 0.22.0.
+## Add to your project
 
-Quickstart
-----------
-**Step 1**: Add to your Cartfile 
+The easiest way to add the Box SDK to your project is as a dependent XCode project.
+
+1. Clone this repository into your project's directory. You can use git submodules
+   if you want.
+2. Open your project in XCode.
+3. Drag BoxSDK.xcodeproj into the root of your project explorer.<br />![Dependent project](http://box.github.io/box-ios-sdk-v2/readme-images/dependent-project.png)
+
+4. Add the BoxSDK project as a target dependency.<br />![Target dependency](http://box.github.io/box-ios-sdk-v2/readme-images/target-dependency.png)
+
+5. Link with libBoxSDK.a<br />![Link with binary](http://box.github.io/box-ios-sdk-v2/readme-images/link-with-binary.png)
+
+6. Add the `-ObjC` linker flag. This is needed to load categories defined in the SDK.<br />![Add linker flag](http://box.github.io/box-ios-sdk-v2/readme-images/linker-flag.png)
+
+7. `#import <BoxSDK/BoxSDK.h>`
+
+See our [sample applications](https://github.com/box/box-ios-sdk-sample-app) for examples of integrating
+the V2 SDK.
+
+## Quickstart
+
+### Configure
+
+Set your client ID and client secret on the SDK client:
+
+```objc
+[BoxSDK sharedSDK].OAuth2Session.clientID = @"YOUR_CLIENT_ID";
+[BoxSDK sharedSDK].OAuth2Session.clientSecret = @"YOUR_CLIENT_SECRET";
 ```
-github "box/box-ios-sdk"
+
+One way to complete the OAuth2 flow is to have your app to register a
+custom URL scheme in order to receive an OAuth2 authorization code.
+In your `Info.plist`, register the following URL scheme:
+
+```
+boxsdk-YOUR_CLIENT_ID
 ```
 
-**Step 2:** Update
-```
-carthage update --platform iOS
+**Note**: When setting up your service on Box, leave the OAuth2 reditrect URI blank.
+The SDK will provide a custom redirect URI when issuing OAuth2 calls; doing so requires
+that no redirect URI be set in your service settings.
+
+### Authenticate
+To authenticate your app with Box, you need to use OAuth2. The authorization flow
+happens in a `UIWebView`. To get started, you can present the sample web view the
+SDK provides:
+
+```objc
+UIViewController *authorizationController = [[BoxAuthorizationViewController alloc] initWithAuthorizationURL:[[BoxSDK sharedSDK].OAuth2Session authorizeURL] redirectURI:nil];
+[self presentViewController:authorizationController animated:YES completion:nil];
 ```
 
-**Step 3:** Drag the built framework from Carthage/Build/iOS into your project. For more detailed instructions please see the official documentation for Carthage (https://github.com/Carthage/Carthage#if-youre-building-for-ios-tvos-or-watchos). 
+On successful authentication, your app will receive an "open in" request using
+the custom URL scheme you registered earlier. In your app delegate:
 
-**Step 4: Import**
-```objectivec
-@import BoxContentSDK;
-```
-
-**Step 5: Set the Box Client ID and Client Secret that you obtain from [creating your app](doc/Setup.md).**
-```objectivec
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+```objc
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString*)sourceApplication
+         annotation:(id)annotation
 {
-  // The UIApplicationDelegate is a good place to do this.
-  [BOXContentClient setClientID:@"your-client-id" clientSecret:@"your-client-secret"];
+    [[BoxSDK sharedSDK].OAuth2Session performAuthorizationCodeGrantWithReceivedURL:url];
+    return YES;
 }
-
-```
-**Step 6: Authenticate a User**
-```objectivec
-// This will present the necessary UI for a user to authenticate into Box
-[[BOXContentClient defaultClient] authenticateWithCompletionBlock:^(BOXUser *user, NSError *error) {
-  if (error == nil) {
-    NSLog(@"Logged in user: %@", user.login);
-  }
-} cancelBlock:nil];
 ```
 
-Sample App
-----------
-A sample app can be found in the [BoxContentSDKSampleApp](../../tree/master/BoxContentSDKSampleApp) folder. The sample app demonstrates how to authenticate a user, and manage the user's files and folders.
+You can listen to notifications on `[BoxSDK sharedSDK].OAuth2Session` to be notified
+when a user becomes successfully authenticated.
 
-To execute the sample app:
-Step 1: Open Workspace
+### Making API calls
+
+All SDK API calls are asynchronous. They are scheduled by the SDK on an `NSOperationQueue`.
+To be notified of API responses and errors, pass blocks to the SDK API call methods. These
+blocks are triggered once the API response has been received by the SDK.
+
+**Note**: callbacks are not triggered on the main thread. Wrap updates to your app's
+UI in a `dispatch_sync` block on the main thread.
+
+#### Get a folder's children
+
+```objc
+BoxCollectionBlock success = ^(BoxCollection *collection)
+{
+  // grab items from the collection, use the collection as a data source
+  // for a table view, etc.
+};
+
+BoxAPIJSONFailureBlock failure = ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSDictionary *JSONDictionary)
+{
+  // handle errors
+};
+
+[[BoxSDK sharedSDK].foldersManager folderItemsWithID:folderID requestBuilder:nil success:success failure:failure];
 ```
-open BoxContentSDKSampleApp.xcworkspace
+
+#### Get a file's information
+
+```objc
+BoxFileBlock success = ^(BoxFile *file)
+{
+  // manipulate the BoxFile.
+};
+
+BoxAPIJSONFailureBlock failure = ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSDictionary *JSONDictionary)
+{
+  // handle errors
+};
+
+[[BoxSDK sharedSDK].filesManager fileInfoWithID:folderID requestBuilder:nil success:success failure:failure];
 ```
 
-Tests
------
-Tests can be found in the 'BoxContentSDKTests' target. [Use Xcode to execute the tests](https://developer.apple.com/library/ios/recipes/xcode_help-test_navigator/RunningTests/RunningTests.html#//apple_ref/doc/uid/TP40013329-CH4-SW1). Travis CI will also execute tests for pull requests and pushes to the repository.
+#### Edit an item's information
 
-Documentation
--------------
-You can find guides and tutorials in the `doc` directory.
+To send data via the API, use a request builder. If we wish to move a file and change its
+name:
 
-* [App Setup](doc/Setup.md)
-* [Authentication](doc/Authentication.md)
-* [Developer's Edition (App Users)](doc/AppUsers.md)
-* [Files](doc/Files.md)
-* [Folders](doc/Folders.md)
-* [Metadata](doc/metadata.md)
-* [Comments](doc/Comments.md)
-* [Collaborations](doc/Collaborations.md)
-* [Events](doc/Events.md)
-* [Search](doc/Search.md)
-* [Users](doc/Users.md)
+```objc
+BoxFileBlock success = ^(BoxFile *file)
+{
+  // manipulate the BoxFile.
+};
 
+BoxAPIJSONFailureBlock failure = ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSDictionary *JSONDictionary)
+{
+  // handle errors
+};
 
-Contributing
-------------
-See [CONTRIBUTING](CONTRIBUTING.md) on how to help out.
+BoxFilesRequestBuilder *builder = [BoxFilesRequestBuilder alloc] init];
+builder.name = @"My awesome file.txt"
+builder.parentID = BoxAPIFolderIDRoot;
 
+[[BoxSDK sharedSDK].filesManager editFileWithID:folderID requestBuilder:builder success:success failure:failure];
+```
 
-Copyright and License
----------------------
-Copyright 2015 Box, Inc. All rights reserved.
+#### Upload a new file
 
- 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+```objc
+BoxFileBlock fileBlock = ^(BoxFile *file)
+{
+  // manipulate resulting BoxFile
+};
 
-  http://www.apache.org/licenses/LICENSE-2.0
+BoxAPIJSONFailureBlock failureBlock = ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSDictionary *JSONDictionary)
+{
+  // handle failed upload
+};
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+BoxAPIMultipartProgressBlock progressBlock = ^(unsigned long long totalBytes, unsigned long long bytesSent)
+{
+  // indicate progress of upload
+};
+
+BoxFilesRequestBuilder *builder = [[BoxFilesRequestBuilder alloc] init];
+builder.name = @"Logo_Box_Blue_Whitebg_480x480.jpg";
+builder.parentID = folderID;
+
+NSString *path = [[NSBundle mainBundle] pathForResource:@"Logo_Box_Blue_Whitebg_480x480.jpg" ofType:nil];
+NSInputStream *inputStream = [NSInputStream inputStreamWithFileAtPath:path];
+NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+long long contentLength = [[fileAttributes objectForKey:NSFileSize] longLongValue];
+
+[[BoxSDK sharedSDK].filesManager uploadFileWithInputStream:inputStream contentLength:contentLength MIMEType:nil requestBuilder:builder success:fileBlock failure:failureBlock progress:progressBlock];
+```
+
+#### Download a file
+
+```objc
+NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:path append:NO];
+
+BoxDownloadSuccessBlock successBlock = ^(NSString *downloadedFileID, long long expectedContentLength)
+{
+  // handle download, preview download, etc.
+};
+
+BoxDownloadFailureBlock failureBlock = ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error)
+{
+  // handle download failure
+};
+
+BoxAPIDataProgressBlock progressBlock = ^(long long expectedTotalBytes, unsigned long long bytesReceived)
+{
+  // display progress
+};
+
+[[BoxSDK sharedSDK].filesManager downloadFileWithID:fileID outputStream:outputStream requestBuilder:nil success:successBlock failure:failureBlock progress:progressBlock];
+```
+
+### Folder Picker
+An easy way to integrate Box into your app is to use the folder picker
+widget included in the SDK. The folder picker provides a folder browser
+that users can use to select a file or folder from their account. You can
+use this folder to then make API calls.  You can find folder picker brand assets 
+such as buttons [here](https://cloud.box.com/picker-assets/).
+
+The folder picker looks like this:
+
+![Folder picker](http://box.github.io/box-ios-sdk-v2/readme-images/folder-picker.png)
+
+See our [sample app that utilizes the folder picker](https://github.com/box/box-ios-sdk-sample-app/tree/master/FolderPicker-SampleApp).
+
+#### Setup steps
+In addition to the installation steps above, you must do two more things in XCode to
+include the folder picker assets and icons in your app.
+
+1. Add BoxSDKResources as a dependent target.<br />![Resource bundle dependency](http://box.github.io/box-ios-sdk-v2/readme-images/resource-bundle-dependency.png)
+2. Copy the resource bundle during your app's copy files build phase.<br />![Resource bundle copy](http://box.github.io/box-ios-sdk-v2/readme-images/copy-bundle.png)
+
+## Tests
+
+This SDK contains unit tests that are runnable with `./bin/test.sh`.
+
+Pull requests will not be accepted unless they include test coverage.
+
+## Documentation
+
+Documentation for this SDK is generated using [appledoc](http://gentlebytes.com/appledoc/).
+Documentation can be generated by running `./bin/generate-documentation.sh`. This script
+depends on the `appledoc` binary which can be downloaded using homebrew (`brew install appledoc`).
+
+Documentation is hosted on this repo's github page.
+
+Pull requests will not be accepted unless they include documentation.
+
+## Known issues
+
+* There is no support for manipulating files in the trash.
+* Only the files and folders endpoints are supported.
+
