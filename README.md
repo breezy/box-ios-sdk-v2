@@ -1,3 +1,5 @@
+# box-ios-sdk-v2
+
 [![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
 [![Build Status](https://api.travis-ci.org/box/box-ios-content-sdk.svg)](https://travis-ci.org/box/box-ios-content-sdk)
 
