@@ -149,7 +149,7 @@
         
         NSMutableDictionary *outDictionary = nil;
         
-        OSStatus result = SecItemCopyMatching((CFDictionaryRef)tempQuery, (CFTypeRef *)&outDictionary);
+        OSStatus result = SecItemCopyMatching((__bridge CFDictionaryRef)tempQuery, (void *)&outDictionary);
         if (result != noErr)
         {
             // Stick these default values into keychain item if nothing found.
@@ -161,8 +161,6 @@
             // load the saved data from Keychain.
             self.keychainItemData = [self secItemFormatToDictionary:outDictionary];
         }
-        
-        [outDictionary release];
     }
     
     return self;
@@ -170,17 +168,10 @@
 
 - (void)dealloc
 {
-    [_keychainItemData release];
     _keychainItemData = nil;
-    [_genericPasswordQuery release];
     _genericPasswordQuery = nil;
-    
-    [_identifier release];
     _identifier = nil;
-    [_accessGroup release];
     _accessGroup = nil;
-    
-    [super dealloc];
 }
 
 - (void)setObject:(id)inObject forKey:(id)key
@@ -253,14 +244,14 @@
     
     // Acquire the password data from the attributes.
     NSData *passwordData = NULL;
-    if (SecItemCopyMatching((CFDictionaryRef)returnDictionary, (CFTypeRef *)&passwordData) == noErr)
+    if (SecItemCopyMatching((__bridge CFDictionaryRef)returnDictionary, (void *)&passwordData) == noErr)
     {
         // Remove the search, class, and identifier key/value, we don't need them anymore.
         [returnDictionary removeObjectForKey:(id)kSecReturnData];
         
         // Add the password to the dictionary, converting from NSData to NSString.
-        NSString *password = [[[NSString alloc] initWithBytes:[passwordData bytes] length:[passwordData length]
-                                                     encoding:NSUTF8StringEncoding] autorelease];
+        NSString *password = [[NSString alloc] initWithBytes:[passwordData bytes] length:[passwordData length]
+                                                    encoding:NSUTF8StringEncoding];
         [returnDictionary setObject:password forKey:(id)kSecValueData];
     }
     else
@@ -268,8 +259,6 @@
         // Don't do anything if nothing is found.
         NSAssert(NO, @"Serious error, no matching item found in the keychain.\n");
     }
-    
-    [passwordData release];
     
     return returnDictionary;
 }
@@ -306,7 +295,7 @@
     NSDictionary *attributes = NULL;
     NSMutableDictionary *updateItem = NULL;
     
-    OSStatus result = SecItemCopyMatching((CFDictionaryRef)self.genericPasswordQuery, (CFTypeRef *)&attributes);
+    OSStatus result = SecItemCopyMatching((__bridge CFDictionaryRef)self.genericPasswordQuery, (void *)&attributes);
     if (result == noErr)
     {
         // First we need the attributes from the Keychain.
@@ -362,13 +351,11 @@
     {
         [self overwriteKeychainItem];
     }
-    
-    [attributes release];
 }
 
 - (NSMutableDictionary *)defaultKeychainItemDataDictionaryWithIdentifier:(NSString *)identifier accessGroup:(NSString *)accessGroup
 {
-    NSMutableDictionary *defaultDictionary = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary *defaultDictionary = [[NSMutableDictionary alloc] init];
     
     // Add the generic attribute and the keychain access group.
     // Also add AttrAccount wher we store identifier and kSecAttrService

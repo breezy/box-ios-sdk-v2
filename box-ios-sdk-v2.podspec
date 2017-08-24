@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
-s.name                  = "BoxSDK"
-s.version               = "1.2.3"
+s.name                  = "BoxContentSDK"
+s.version               = "1.2.4"
 s.summary               = "iOS + OS X SDK for the Box V2 API."
 s.homepage              = "https://github.com/breezy/box-ios-sdk-v2"
 s.license               = { :type => "MIT", :file => "LICENSE" }
@@ -15,9 +15,9 @@ s.ios.deployment_target = "5.0"
 
 # File patterns
 
-s.ios.source_files        = "BoxSDK/*.{h,m}", "BoxSDK/**/*.{h,m}"
-s.ios.exclude_files       = "BoxSDK/External/ISO8601DateFormatter/BoxISO8601DateFormatter.{h,m}"
-s.ios.public_header_files = "BoxSDK/*.h", "BoxSDK/**/*.h"
+s.ios.source_files        = "BoxContentSDK/*.{h,m}", "BoxContentSDK/**/*.{h,m}"
+s.ios.exclude_files       = "BoxContentSDK/External/ISO8601DateFormatter/BoxISO8601DateFormatter.{h,m}, BoxContentSDK/External/BOXKeychainItemWrapperKeychainItemWrapper.{h,m}"
+s.ios.public_header_files = "BoxContentSDK/*.h", "BoxContentSDK/**/*.h"
 s.resource_bundle = {
    'BoxSDKResources' => [
      'BoxSDKResources/Assets/*.*',
@@ -31,14 +31,7 @@ s.resource_bundle = {
 s.ios.frameworks        = "Security", "QuartzCore"
 s.requires_arc          = true
 s.xcconfig              = { "OTHER_LDFLAGS" => "-ObjC -all_load" }
-s.ios.header_dir        = "BoxSDK"
-s.module_name           = "BoxSDK"
-
-# Subspecs
-
-s.subspec "no-arc" do |sp|
-sp.source_files              = "BoxSDK/External/ISO8601DateFormatter/BoxISO8601DateFormatter.{h,m}"
-sp.requires_arc              = false
-end
+s.ios.header_dir        = "BoxContentSDK"
+s.module_name           = "BoxContentSDK"
 
 end
