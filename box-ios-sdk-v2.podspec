@@ -15,14 +15,14 @@ s.ios.deployment_target = "5.0"
 
 # File patterns
 
-s.ios.source_files        = "BoxContentSDK/*.{h,m}", "BoxContentSDK/**/*.{h,m}"
-s.ios.exclude_files       = "BoxContentSDK/External/ISO8601DateFormatter/BoxISO8601DateFormatter.{h,m}, BoxContentSDK/External/BOXKeychainItemWrapperKeychainItemWrapper.{h,m}"
-s.ios.public_header_files = "BoxContentSDK/*.h", "BoxContentSDK/**/*.h"
+s.ios.source_files        = "BoxContentSDK/BoxContentSDK/*.{h,m}", "BoxContentSDK/BoxContentSDK/**/*.{h,m}"
+s.ios.exclude_files       = "BoxContentSDK/BoxContentSDK/External/ISO8601DateFormatter/BoxISO8601DateFormatter.{h,m}, BoxContentSDK/BoxContentSDK/External/BOXKeychainItemWrapperKeychainItemWrapper.{h,m}"
+s.ios.public_header_files = "BoxContentSDK/BoxContentSDK/*.h", "BoxContentSDK/BoxContentSDK/**/*.h"
 s.resource_bundle = {
    'BoxSDKResources' => [
-     'BoxSDKResources/Assets/*.*',
-     'BoxSDKResources/Icons/*.*',
-     'BoxSDKResources/*.lproj'
+     'BoxContentSDK/BoxSDKResources/Assets/*.*',
+     'BoxContentSDK/BoxSDKResources/Icons/*.*',
+     'BoxContentSDK/BoxSDKResources/*.lproj'
    ]
 }
 
