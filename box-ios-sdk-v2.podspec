@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 s.name                  = "BoxContentSDK"
-s.version               = "1.2.6"
+s.version               = "1.2.7"
 s.summary               = "iOS + OS X SDK for the Box V2 API."
 s.homepage              = "https://github.com/breezy/box-ios-sdk-v2"
 s.license               = { :type => "MIT", :file => "LICENSE" }
@@ -30,7 +30,7 @@ s.resource_bundle = {
 
 s.ios.frameworks        = "Security", "QuartzCore"
 s.requires_arc          = true
-s.xcconfig              = { "OTHER_LDFLAGS" => "-ObjC -all_load" }
+s.xcconfig              = { "OTHER_LDFLAGS" => "-ObjC -all_load", "GCC_PREPROCESSOR_DEFINITIONS" => 'COMMON_DIGEST_FOR_OPENSSL=1'}
 s.ios.header_dir        = "BoxContentSDK"
 s.module_name           = "BoxContentSDK"
 
