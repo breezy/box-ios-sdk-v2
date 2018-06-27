@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 s.name                  = "BoxContentSDK"
-s.version               = "1.2.5"
+s.version               = "1.2.6"
 s.summary               = "iOS + OS X SDK for the Box V2 API."
 s.homepage              = "https://github.com/breezy/box-ios-sdk-v2"
 s.license               = { :type => "MIT", :file => "LICENSE" }

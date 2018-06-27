@@ -22,7 +22,6 @@
 #import "BOXHashHelper.h"
 
 // System framework and libraries
-#define COMMON_DIGEST_FOR_OPENSSL
 #include <CommonCrypto/CommonDigest.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdint.h>
